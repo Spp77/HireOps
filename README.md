@@ -1,89 +1,75 @@
 # HireOps
 
-**HireOps** is a production-grade, highly scalable job portal inspired by Indeed. It connects job seekers with recruiters through a robust platform built with Django. The application is designed to be highly reliable, horizontally and vertically scalable, and deeply customizable.
+HireOps is a production-grade, highly scalable job portal, engineered to facilitate connections between job seekers and recruiters. Inspired by industry-leading platforms such as Indeed, this project is designed for robust performance, horizontal scaling, and enterprise-level system architecture.
 
----
+## Architecture & System Design
 
-## 🚀 Features
+The application follows a distributed architecture utilizing the following core components:
 
-- **Robust Authentication & Authorization**: Secure accounts for both Job Seekers and Recruiters with role-based access control.
-- **Candidate Profiles**: Comprehensive profiles for candidates to showcase their skills and resumes.
-- **Job Management**: Complete CRUD operations for recruiters to post and manage job listings.
-- **Advanced Filtering & Search**: Powerful search capability powered by `django-filter` to find jobs rapidly.
-- **Job Applications & Saving**: Apply to jobs seamlessly or save them for later.
-- **Background Task Processing**: Uses **Celery** to handle email notifications and asynchronous tasks reliably.
-- **Caching**: Leverages **Redis** to cache frequently queried data and speed up the application.
-- **Security Hardening**: Secure, OWASP-compliant headers, database read-replica routing support, and environment-specific settings configurations (base, dev, prod).
-- **Containerized Ecosystem**: Fully Dockerized with `docker-compose` for an effortless local development and deployment experience.
+- **Web Application Server**: Built on Django and Django REST Framework, handling core business logic, API operations, and strict role-based access control.
+- **Asynchronous Task Queue**: Utilizing Celery and supported by Redis to offload heavy background processes (e.g., email notifications, data processing), ensuring low-latency API response times.
+- **Caching Layer**: Redis is employed for in-memory caching to optimize query performance and reduce recurrent database load.
+- **Database System**: Engineered for PostgreSQL, with support for read-replica routing to scale database read operations independently of write operations.
+- **Security Standards**: Hardened via OWASP-compliant security headers, strict environment segregation (Base, Development, Production configurations), and secure session management.
 
----
+## Technology Stack
 
-## 🛠 Tech Stack
-
-- **Backend Framework**: [Django](https://www.djangoproject.com/) & [Django REST Framework](https://www.django-rest-framework.org/)
-- **Database**: PostgreSQL (with Read-Replica Support)
-- **Caching & Message Broker**: [Redis](https://redis.io/)
-- **Asynchronous Tasks**: [Celery](https://docs.celeryq.dev/)
-- **Containerization**: [Docker](https://www.docker.com/) & Docker Compose
+- **Backend Framework**: Python 3.10+, Django, Django REST Framework
+- **Primary Database**: PostgreSQL
+- **Message Broker & Cache**: Redis
+- **Task Worker**: Celery
+- **Containerization**: Docker & Docker Compose
 - **Dependency Management**: Pipenv
 
----
+## Core Project Structure
 
-## ⚙️ Local Development Setup
+```text
+HireOps/
+├── apps/               # Isolated application modules (companies, jobs, users)
+├── config/             # Environment-specific configuration configurations (base, dev, prod)
+├── docker-compose.yml  # Multi-container orchestration definition
+├── Dockerfile          # Web container image build instructions
+└── Pipfile             # Deterministic dependency specifications
+```
 
-We use Docker to make local development exactly mimic our production environment without any hassle.
+## Provisioning and Setup
+
+The application deployment workflow utilizes Docker Compose to ensure strict environment parity across development, staging, and production deployments.
 
 ### Prerequisites
-Make sure you have [Docker](https://docs.docker.com/get-docker/) and [Docker Compose](https://docs.docker.com/compose/install/) installed on your machine.
 
-### Getting Started
+Ensure the host machine or deployment environment has the following dependencies provisioned:
+- Docker Engine (v20.10.0 or higher)
+- Docker Compose (v2.0.0 or higher)
 
-1. **Clone the repository** (if you haven't already):
+### Environment Initialization
+
+1. Clone the repository to your host environment:
    ```bash
-   git clone https://github.com/your-username/HireOps.git
+   git clone https://github.com/Spp77/HireOps.git
    cd HireOps
    ```
 
-2. **Configure Environment Variables**:
-   Copy the example environment file and customize it as needed.
+2. Establish the environment configuration:
    ```bash
    cp .env.example .env
    ```
+   *Note: Modify the `.env` file with appropriate production secrets, database credentials, and API keys prior to deployment.*
 
-3. **Build and Run the Containers**:
-   Fire up the Django application, Redis, Celery worker, and PostgreSQL database.
+3. Provision the infrastructure and execute the container build pipeline:
    ```bash
-   docker-compose up --build
+   docker-compose up --build -d
    ```
 
-4. **Apply Migrations**:
-   Run the database migrations to set up your schema.
+4. Execute database migrations to construct the requisite schema:
    ```bash
    docker-compose exec web python manage.py migrate
    ```
 
-5. **Access the Application**:
-   Navigate to `http://localhost:8000` in your web browser.
+5. The service will begin listening on port `8000`. Navigate to `http://localhost:8000` or the mapped external IP address.
 
----
+## Authorization & Access Control
 
-## 📂 Project Structure Overview
-
-```text
-HireOps/
-├── apps/                 # Core Django apps (companies, jobs, users, etc.)
-├── config/               # Django project-level settings (base, dev, prod)
-├── docker-compose.yml    # Docker services configuration
-├── Dockerfile            # Instructions to build the web container
-├── Pipfile & Pipfile.lock# Dependency tracking
-└── .env                  # Environment configurations
-```
-
----
-
-## 🚧 Contributing
-As the project grows, ensure you test your changes locally and run all migrations before pushing any updates. Ensure that `.env` files are **never** committed to version control.
-
----
-
-*This README is a living document and will be continuously updated as HireOps evolves.*
+Role-based access is strictly enforced across all REST endpoints. The system authenticates two primary entities:
+- **Recruiters**: Possess complete CRUD authorization over job postings, applicant tracking, and company profiles.
+- **Candidates**: Maintain read/write control over their personal profiles, resumes, saved job states, and application histories.
