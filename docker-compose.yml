@@ -1,0 +1,143 @@
+# ─────────────────────────────────────────────────────────────────
+# HireOps — Docker Compose
+#
+# Services:
+#   db        PostgreSQL (primary DB)
+#   redis     Redis (cache + Celery broker)
+#   web       Django / Gunicorn API server  (scale horizontally)
+#   worker    Celery worker                 (scale horizontally)
+#   beat      Celery beat scheduler         (1 instance only!)
+#
+# Scale example:
+#   docker compose up --scale web=4 --scale worker=8
+# ─────────────────────────────────────────────────────────────────
+
+services:
+
+  # ── PostgreSQL ─────────────────────────────────────────────────
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB:       ${DB_NAME:-hireops}
+      POSTGRES_USER:     ${DB_USER:-hireops}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-changeme}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-hireops}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - backend
+
+  # ── Redis ──────────────────────────────────────────────────────
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    command: redis-server --save 60 1 --loglevel warning
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - backend
+
+  # ── Django / Gunicorn (horizontally scalable) ──────────────────
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: runtime
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      ENV:          production
+      DB_HOST:      db
+      REDIS_URL:    redis://redis:6379/0
+    command: >
+      sh -c "python manage.py migrate --noinput &&
+             python manage.py collectstatic --noinput &&
+             gunicorn config.wsgi:application --config gunicorn.conf.py"
+    volumes:
+      - media_files:/app/media
+      - static_files:/app/staticfiles
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - backend
+
+  # ── Celery Worker (horizontally scalable) ──────────────────────
+  worker:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: runtime
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      ENV:          production
+      DB_HOST:      db
+      REDIS_URL:    redis://redis:6379/0
+    command: >
+      celery -A config worker
+        --loglevel=info
+        --concurrency=4
+        --max-tasks-per-child=200
+        --queues=default,emails,notifications
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - backend
+
+  # ── Celery Beat (1 instance — do NOT scale) ────────────────────
+  beat:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: runtime
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      ENV:          production
+      DB_HOST:      db
+      REDIS_URL:    redis://redis:6379/0
+    command: >
+      celery -A config beat
+        --loglevel=info
+        --scheduler django_celery_beat.schedulers:DatabaseScheduler
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - backend
+
+volumes:
+  postgres_data:
+  redis_data:
+  media_files:
+  static_files:
+
+networks:
+  backend:
+    driver: bridge

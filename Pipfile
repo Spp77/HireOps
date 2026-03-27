@@ -1,0 +1,39 @@
+[[source]]
+url = "https://pypi.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[packages]
+# ── Django core ───────────────────────────────────────────────
+django = "*"
+djangorestframework = "*"
+django-cors-headers = "*"
+psycopg2-binary = "*"
+pillow = "*"
+python-decouple = "*"
+
+# ── Auth / JWT ────────────────────────────────────────────────
+djangorestframework-simplejwt = "*"
+
+# ── Filtering / docs ──────────────────────────────────────────
+django-filter = "*"
+drf-spectacular = "*"
+
+# ── Cache / Sessions ──────────────────────────────────────────
+django-redis = "*"
+
+# ── Async tasks ───────────────────────────────────────────────
+celery = {extras = ["redis"], version = "*"}
+django-celery-beat = "*"       # DB-backed periodic task scheduler
+django-celery-results = "*"    # Store task results in DB (optional)
+
+# ── Production server ─────────────────────────────────────────
+gunicorn = "*"
+whitenoise = {extras = ["brotli"], version = "*"}
+
+[dev-packages]
+# Dev tools — NOT installed in production Docker image
+ipython = "*"
+
+[requires]
+python_version = "3.13"

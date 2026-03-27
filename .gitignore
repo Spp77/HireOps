@@ -1,0 +1,32 @@
+# ── Python / Django ───────────────────────────────────────────
+__pycache__/
+*.pyc
+*.pyo
+.Python
+*.egg-info/
+dist/
+build/
+*.log
+db.sqlite3
+
+# ── Environment (NEVER commit secrets) ────────────────────────
+.env
+.env.*
+!.env.example
+
+# ── Virtualenv ────────────────────────────────────────────────
+.venv/
+venv/
+.pipenv/
+
+# ── Media uploads (user files — stored on S3 in production) ───
+media/
+
+# ── Collected static (generated — not source) ─────────────────
+staticfiles/
+
+# ── IDE ───────────────────────────────────────────────────────
+.vscode/
+.idea/
+*.swp
+*.swo
