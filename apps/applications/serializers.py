@@ -1,10 +1,12 @@
 from rest_framework import serializers
 from .models import Application, SavedJob
+from apps.jobs.models import Job
 from apps.jobs.serializers import JobSerializer
 
 
 class ApplicationSerializer(serializers.ModelSerializer):
     """Write serializer used when a candidate submits an application."""
+    job             = serializers.SlugRelatedField(slug_field='id', queryset=Job.objects.all())
     candidate_email = serializers.EmailField(source='candidate.email', read_only=True)
     job_title       = serializers.CharField(source='job.title', read_only=True)
 
@@ -45,6 +47,7 @@ class ApplicationStatusSerializer(serializers.ModelSerializer):
 
 
 class SavedJobSerializer(serializers.ModelSerializer):
+    job          = serializers.SlugRelatedField(slug_field='id', queryset=Job.objects.all())
     job_title    = serializers.CharField(source='job.title', read_only=True)
     company_name = serializers.CharField(source='job.company.name', read_only=True)
 

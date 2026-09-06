@@ -8,6 +8,7 @@ from .filters import JobFilter
 from apps.accounts.models import User
 from apps.common.exceptions import error_response
 from apps.common.error_codes import ErrorCode
+from .selectors import get_active_jobs, get_similar_jobs, get_jobs_for_recruiter
 
 
 # ─────────────────────────────────────────────────────────────────
@@ -36,11 +37,7 @@ class JobListAPIView(generics.ListAPIView):
     ordering = ['-created_at']
 
     def get_queryset(self):
-        return (
-            Job.objects
-            .filter(status=Job.Status.ACTIVE)
-            .select_related('company')
-        )
+        return get_active_jobs()
 
 
 class JobDetailAPIView(generics.RetrieveAPIView):
@@ -66,19 +63,7 @@ def similar_jobs(request, id):
     except Job.DoesNotExist:
         return error_response(ErrorCode.JOB_NOT_FOUND, "Job not found.", status.HTTP_404_NOT_FOUND)
 
-    qs = (
-        Job.objects
-        .filter(status=Job.Status.ACTIVE)
-        .exclude(id=job.id)
-        .filter(
-            Q(job_type=job.job_type) |
-            Q(experience_level=job.experience_level) |
-            Q(location__icontains=job.location.split(',')[0])
-        )
-        .select_related('company')
-        .distinct()
-        [:5]
-    )
+    qs = get_similar_jobs(job)
     serializer = JobMiniSerializer(qs, many=True)
     return Response(serializer.data)
 
@@ -153,8 +138,4 @@ class RecruiterMyJobsView(generics.ListAPIView):
     def get_queryset(self):
         if self.request.user.role != User.Role.RECRUITER:
             return Job.objects.none()
-        return (
-            Job.objects
-            .filter(company__recruiter=self.request.user)
-            .select_related('company')
-        )
+        return get_jobs_for_recruiter(self.request.user)

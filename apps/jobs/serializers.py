@@ -1,5 +1,6 @@
 from rest_framework import serializers
 from .models import Job
+from apps.companies.models import Company
 from apps.companies.serializers import CompanySerializer
 
 
@@ -22,6 +23,8 @@ class JobSerializer(serializers.ModelSerializer):
 
 class JobWriteSerializer(serializers.ModelSerializer):
     """Write serializer for create / update."""
+    company = serializers.SlugRelatedField(slug_field='id', queryset=Company.objects.all())
+
     class Meta:
         model = Job
         fields = [

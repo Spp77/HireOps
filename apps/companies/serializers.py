@@ -18,6 +18,7 @@ class CompanySerializer(serializers.ModelSerializer):
 
 
 class CompanyFollowSerializer(serializers.ModelSerializer):
+    company      = serializers.SlugRelatedField(slug_field='id', queryset=Company.objects.all())
     company_name = serializers.CharField(source='company.name', read_only=True)
 
     class Meta:

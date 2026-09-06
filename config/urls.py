@@ -6,26 +6,27 @@ from drf_spectacular.views import SpectacularAPIView, SpectacularRedocView, Spec
 from apps.common.health import health_check
 
 urlpatterns = [
-    # ── Ops ──────────────────────────────────────────────────────
-    path('health/',   health_check,             name='health-check'),
+    # ── Ops & Health ────────────────────────────────────────────
+    path('health/', health_check, name='health-check'),
 
-    # ── Admin ────────────────────────────────────────────────────
-    path('admin/',    admin.site.urls),
+    # ── Admin ───────────────────────────────────────────────────
+    path('admin/', admin.site.urls),
 
-    # ── API v1 ───────────────────────────────────────────────────
-    path('api/v1/auth/',          include('apps.accounts.urls')),
-    path('api/v1/profile/',       include('apps.profiles.urls')),
-    path('api/v1/companies/',     include('apps.companies.urls')),
-    path('api/v1/jobs/',          include('apps.jobs.urls')),
-    path('api/v1/applications/',  include('apps.applications.urls')),
+    # ── API v1 ──────────────────────────────────────────────────
+    path('api/v1/auth/', include('apps.accounts.urls')),
+    path('api/v1/accounts/', include('apps.accounts.urls')),
+    path('api/v1/profile/', include('apps.profiles.urls')),
+    path('api/v1/profiles/', include('apps.profiles.urls')),
+    path('api/v1/companies/', include('apps.companies.urls')),
+    path('api/v1/jobs/', include('apps.jobs.urls')),
+    path('api/v1/applications/', include('apps.applications.urls')),
     path('api/v1/notifications/', include('apps.notifications.urls')),
 
-    # ── OpenAPI / Swagger Docs ───────────────────────────────────
-    path('api/schema/',  SpectacularAPIView.as_view(),                         name='schema'),
-    path('api/docs/',    SpectacularSwaggerView.as_view(url_name='schema'),    name='swagger-ui'),
-    path('api/redoc/',   SpectacularRedocView.as_view(url_name='schema'),      name='redoc'),
+    # ── OpenAPI / Swagger Docs ──────────────────────────────────
+    path('api/schema/', SpectacularAPIView.as_view(), name='schema'),
+    path('api/docs/', SpectacularSwaggerView.as_view(url_name='schema'), name='swagger-ui'),
+    path('api/redoc/', SpectacularRedocView.as_view(url_name='schema'), name='redoc'),
 ]
 
-# Serve media files during development only
 if settings.DEBUG:
-    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
